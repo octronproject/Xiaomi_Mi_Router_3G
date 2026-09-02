@@ -1,7 +1,10 @@
-name: Build OpenWrt 25.12.5 MT7621 Hardmod
+name: Build OpenWrt 25.12.5 Mi Router 3G v1 SPI
 
 on:
   workflow_dispatch:
+
+env:
+  TZ: Asia/Jakarta
 
 jobs:
   build:
@@ -10,6 +13,11 @@ jobs:
     steps:
     - name: Checkout Your Repository
       uses: actions/checkout@v4
+
+    - name: Set Timezone to WIB
+      run: |
+        sudo timedatectl set-timezone "Asia/Jakarta"
+        echo "BUILD_DATE=$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
 
     - name: Free Disk Space & Install Dependencies
       env:
@@ -27,30 +35,42 @@ jobs:
 
     - name: Clone OpenWrt Source & Checkout Tag
       run: |
-        git clone https://github.com/openwrt/openwrt.git
+        git clone https://github.com openwrt
         cd openwrt
-        git pull
         git checkout v25.12.5
         ./scripts/feeds update -a
         ./scripts/feeds install -a
 
     - name: Apply Hardmod Fixes (Overwrite DTS & MK)
       run: |
-        if [ -d "patch-custom" ]; then
-          find patch-custom/ -name "*.dts" -exec cp -f {} openwrt/target/linux/ramips/dts/ \;
-          echo "DTS files successfully replaced!"
+        # 1. Menimpa file DTS Xiaomi Mi Router 3G dengan file modifikasi SPI milik Anda
+        if [ -f "patch-custom/mt7621_xiaomi_mi-router-3g.dts" ]; then
+          cp -f patch-custom/mt7621_xiaomi_mi-router-3g.dts openwrt/target/linux/ramips/dts/
+          echo "DTS Xiaomi 3G SPI successfully replaced!"
+        else
+          # Jika Anda menamai file dts berbeda di folder patch-custom, skrip ini akan mencari file berekstensi .dts secara otomatis
+          find patch-custom/ -name "*.dts" -exec cp -f {} openwrt/target/linux/ramips/dts/mt7621_xiaomi_mi-router-3g.dts \;
+          echo "DTS files automatically applied to Mi Router 3G!"
         fi
         
+        # 2. Menimpa file Makefile (mt7621.mk) untuk instruksi build
         if [ -f "patch-custom/mt7621.mk" ]; then
           cp -f patch-custom/mt7621.mk openwrt/target/linux/ramips/image/
           echo "Makefile (mt7621.mk) successfully replaced!"
         fi
 
-    - name: Generate Config for MT7621
+    - name: Generate Config for Mi Router 3G
       run: |
         cd openwrt
+        # Mengunci target spesifik ke ramips / mt7621 / Xiaomi Mi Router 3G
         echo "CONFIG_TARGET_ramips=y" > .config
         echo "CONFIG_TARGET_ramips_mt7621=y" >> .config
+        echo "CONFIG_TARGET_ramips_mt7621_DEVICE_xiaomi_mi-router-3g=y" >> .config
+        
+        # Suntik aplikasi LuCI dasar (Bahasa Indonesia)
+        echo "CONFIG_PACKAGE_luci=y" >> .config
+        echo "CONFIG_PACKAGE_luci-app-firewall=y" >> .config
+        echo "CONFIG_PACKAGE_luci-i18n-base-id=y" >> .config
         
         if [ -f "../.config" ]; then
           cat ../.config >> .config
@@ -61,15 +81,13 @@ jobs:
     - name: Download Package Source (Pre-download)
       run: |
         cd openwrt
-        # Mendownload semua dependensi dan source paket sekaligus di awal
         make download -j8
-        # Menampilkan file yang gagal didownload jika ada (opsional untuk mempermudah tracking)
         find dl -size 0 -exec rm -f {} \;
 
-    - name: Compile Toolchain & Firmware
+    - name: Compile Toolchain & Firmware (World)
       run: |
         cd openwrt
-        make -j $(nproc) download world
+        make -j$(nproc) world || make -j1 V=s world
 
     - name: Organize Files
       id: organize
@@ -80,5 +98,5 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: OpenWrt_25.12.5_MT7621_Hardmod
+        name: OpenWrt_25.12.5_MiRouter3G_SPI_${{ env.BUILD_DATE }}
         path: ${{ env.FIRMWARE_PATH }}/*
