@@ -27,22 +27,19 @@ jobs:
 
     - name: Clone OpenWrt Source & Checkout Tag
       run: |
-        git clone https://github.com/openwrt/openwrt.git
+        git clone https://github.com openwrt
         cd openwrt
-        git pull
         git checkout v25.12.5
         ./scripts/feeds update -a
         ./scripts/feeds install -a
 
     - name: Apply Hardmod Fixes (Overwrite DTS & MK)
       run: |
-        # 1. Menimpa file DTS target ramips mt7621
         if [ -d "patch-custom" ]; then
           find patch-custom/ -name "*.dts" -exec cp -f {} openwrt/target/linux/ramips/dts/ \;
           echo "DTS files successfully replaced!"
         fi
         
-        # 2. Menimpa file Makefile (mt7621.mk) untuk mengubah instruksi build
         if [ -f "patch-custom/mt7621.mk" ]; then
           cp -f patch-custom/mt7621.mk openwrt/target/linux/ramips/image/
           echo "Makefile (mt7621.mk) successfully replaced!"
@@ -54,12 +51,19 @@ jobs:
         echo "CONFIG_TARGET_ramips=y" > .config
         echo "CONFIG_TARGET_ramips_mt7621=y" >> .config
         
-        # Menyertakan .config tambahan jika ada di root repo Anda
         if [ -f "../.config" ]; then
           cat ../.config >> .config
         fi
         
         make defconfig
+
+    - name: Download Package Source (Pre-download)
+      run: |
+        cd openwrt
+        # Mendownload semua dependensi dan source paket sekaligus di awal
+        make download -j8
+        # Menampilkan file yang gagal didownload jika ada (opsional untuk mempermudah tracking)
+        find dl -size 0 -exec rm -f {} \;
 
     - name: Compile Toolchain & Firmware
       run: |
