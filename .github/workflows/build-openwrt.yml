@@ -37,6 +37,7 @@ jobs:
       run: |
         git clone https://github.com openwrt
         cd openwrt
+        git pull
         git checkout v25.12.5
         ./scripts/feeds update -a
         ./scripts/feeds install -a
