@@ -43,17 +43,14 @@ jobs:
 
     - name: Apply Hardmod Fixes (Overwrite DTS & MK)
       run: |
-        # 1. Menimpa file DTS Xiaomi Mi Router 3G dengan file modifikasi SPI milik Anda
         if [ -f "patch-custom/mt7621_xiaomi_mi-router-3g.dts" ]; then
           cp -f patch-custom/mt7621_xiaomi_mi-router-3g.dts openwrt/target/linux/ramips/dts/
           echo "DTS Xiaomi 3G SPI successfully replaced!"
         else
-          # Jika Anda menamai file dts berbeda di folder patch-custom, skrip ini akan mencari file berekstensi .dts secara otomatis
           find patch-custom/ -name "*.dts" -exec cp -f {} openwrt/target/linux/ramips/dts/mt7621_xiaomi_mi-router-3g.dts \;
           echo "DTS files automatically applied to Mi Router 3G!"
         fi
         
-        # 2. Menimpa file Makefile (mt7621.mk) untuk instruksi build
         if [ -f "patch-custom/mt7621.mk" ]; then
           cp -f patch-custom/mt7621.mk openwrt/target/linux/ramips/image/
           echo "Makefile (mt7621.mk) successfully replaced!"
@@ -62,7 +59,6 @@ jobs:
     - name: Generate Config for Mi Router 3G
       run: |
         cd openwrt
-        # Mengunci target spesifik ke ramips / mt7621 / Xiaomi Mi Router 3G
         echo "CONFIG_TARGET_ramips=y" > .config
         echo "CONFIG_TARGET_ramips_mt7621=y" >> .config
         echo "CONFIG_TARGET_ramips_mt7621_DEVICE_xiaomi_mi-router-3g=y" >> .config
@@ -77,6 +73,14 @@ jobs:
         fi
         
         make defconfig
+
+    - name: Force Match Vermagic Hash
+      run: |
+        cd openwrt
+        # Memaksa sistem build menggunakan signature yang sama persis dengan server resmi
+        echo "35fb64ea09ee15c2f267bd5436b7f178" > .vermagic
+        sed -i 's/$(STAMP_KERNEL_VERSION)/35fb64ea09ee15c2f267bd5436b7f178/g' include/kernel-defaults.mk
+        echo "Vermagic successfully forced to 35fb64ea09ee15c2f267bd5436b7f178"
 
     - name: Download Package Source (Pre-download)
       run: |
