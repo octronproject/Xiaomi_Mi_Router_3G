@@ -8,7 +8,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
     - name: Checkout Your Repository
@@ -35,7 +35,7 @@ jobs:
 
     - name: Clone OpenWrt Source & Checkout Tag
       run: |
-        git clone https://github.com openwrt
+        git clone https://github.com/openwrt/openwrt.git
         cd openwrt
         git pull
         git checkout v25.12.5
