@@ -27,8 +27,9 @@ jobs:
 
     - name: Clone OpenWrt Source & Checkout Tag
       run: |
-        git clone https://github.com openwrt
+        git clone https://github.com/openwrt/openwrt.git
         cd openwrt
+        git pull
         git checkout v25.12.5
         ./scripts/feeds update -a
         ./scripts/feeds install -a
