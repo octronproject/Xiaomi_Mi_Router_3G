@@ -35,15 +35,13 @@ jobs:
 
     - name: Apply Hardmod Fixes (Overwrite DTS & MK)
       run: |
-        # Pastikan nama file di folder patch-custom sesuai dengan nama asli di source code OpenWrt
-        
         # 1. Menimpa file DTS target ramips mt7621
-        if [ -f "patch-custom/nama_router_kamu.dts" ]; then
-          cp -f patch-custom/nama_router_kamu.dts openwrt/target/linux/ramips/dts/
-          echo "DTS file successfully replaced!"
+        if [ -d "patch-custom" ]; then
+          find patch-custom/ -name "*.dts" -exec cp -f {} openwrt/target/linux/ramips/dts/ \;
+          echo "DTS files successfully replaced!"
         fi
         
-        # 2. Menimpa file Makefile (mt7621.mk) untuk mengubah instruksi build dari NAND ke SPI
+        # 2. Menimpa file Makefile (mt7621.mk) untuk mengubah instruksi build
         if [ -f "patch-custom/mt7621.mk" ]; then
           cp -f patch-custom/mt7621.mk openwrt/target/linux/ramips/image/
           echo "Makefile (mt7621.mk) successfully replaced!"
@@ -77,4 +75,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: OpenWrt_25.12.5_MT7621_Hardmod
-        path: ${{ env:FIRMWARE_PATH }}/*
+        path: ${{ env.FIRMWARE_PATH }}/*
