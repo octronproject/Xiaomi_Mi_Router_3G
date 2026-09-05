@@ -1,4 +1,4 @@
 # Xiaomi Mi Router 3G 
 Xiaomi Mi Router 3G V1 SPI NOR 16MB
-OpenWRT 25.12.5 Stable Release
+OpenWrt 25.12.5 Stable Release
 (Vanilla)
