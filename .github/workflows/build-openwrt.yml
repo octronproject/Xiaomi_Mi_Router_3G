@@ -98,15 +98,8 @@ jobs:
         cd openwrt
         make -j$(nproc) world || make -j1 V=s world
 
-    - name: Organize Files
-      id: organize
-      run: |
-        cd openwrt/bin/targets/ramips/mt7621
-        echo "FIRMWARE_PATH=$PWD" >> $GITHUB_ENV
-
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: OpenWrt_25.12.5_MiRouter3G_SPI_${{ env.BUILD_DATE }}
-        path: ${{ env.FIRMWARE_PATH }}/*
-        retention-days: 3
+        name: OpenWrt_25.12.5_Mi_Router_3G_v1_SPI_${{ env.BUILD_DATE }}
+        path: openwrt/bin
